@@ -65,7 +65,7 @@ with col1:
     except:
         pass
 with col2:
-    st.title("EcoSort IA: Clasificación con Inteligencia Artificial")
+    st.title("EcoScan IA: Clasificación con Inteligencia Artificial")
     st.write("Identifica el tipo de residuo y descubre cómo reciclarlo correctamente.")
 
 # 7. Carga del modelo
