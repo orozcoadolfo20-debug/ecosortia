@@ -98,19 +98,23 @@ def registrar_residuo(categoria):
     else:
         st.session_state.conteo_categorias[categoria] = 1
 
-# --- FUNCIÓN ACTUALIZADA A TUS COLORES ---
+# --- FUNCIÓN ACTUALIZADA: Corrección del bug de "inorgánico" ---
 def obtener_recomendacion(categoria):
     cat = categoria.lower() 
     
-    # Verde: Orgánico
-    if "orgánico" in cat or "organico" in cat or "comida" in cat or "fruta" in cat or "cáscara" in cat:
+    # 1. Amarillo: Inorgánico (Evaluamos esto PRIMERO para que no se confunda con orgánico)
+    if "inorgánico" in cat or "inorganico" in cat or "envoltura" in cat:
+        return "🟡 **Contenedor Amarillo (Inorgánico / No Reciclable):** Usa este contenedor para envolturas de golosinas, bolsas sucias y material que no se puede reciclar."
+    
+    # 2. Verde: Orgánico (Ahora si dice orgánico, estamos seguros de que no es inorgánico)
+    elif "orgánico" in cat or "organico" in cat or "comida" in cat or "fruta" in cat or "cáscara" in cat:
         return "🟢 **Contenedor Verde (Orgánico):** Deposita aquí restos de comida, cáscaras y material biodegradable."
     
-    # Azul: Reciclable (PET, cartón, papel, vidrio, latas)
+    # 3. Azul: Reciclable (PET, cartón, papel, vidrio, latas)
     elif "plástico" in cat or "plastic" in cat or "pet" in cat or "papel" in cat or "cartón" in cat or "carton" in cat or "vidrio" in cat or "metal" in cat or "lata" in cat:
         return "🔵 **Contenedor Azul (Reciclable):** Ideal para botellas plásticas (PET), cartón o latas. Asegúrate de que estén limpios o vacíos."
     
-    # Amarillo: Inorgánico / No reciclable (Envolturas, basura general)
+    # 4. Por defecto, si no reconoce la palabra
     else:
         return "🟡 **Contenedor Amarillo (Inorgánico / No Reciclable):** Usa este contenedor para envolturas de golosinas, bolsas sucias y material que no se puede reciclar."
 
@@ -132,7 +136,6 @@ with tab1:
         st.success("¡Análisis completado!")
         st.markdown(f"### 🎯 Categoría Detectada: **{label_text}** (`{confidence * 100:.2f}%` certeza)")
         
-        # Mostrar recomendación con colores del cartel
         recomendacion = obtener_recomendacion(label_text)
         st.info(f"♻️ **Instrucción:** {recomendacion}")
         
@@ -156,7 +159,6 @@ with tab2:
         st.success("¡Análisis completado!")
         st.markdown(f"### 🎯 Categoría Detectada: **{label_text}** (`{confidence * 100:.2f}%` certeza)")
         
-        # Mostrar recomendación con colores del cartel
         recomendacion = obtener_recomendacion(label_text)
         st.info(f"♻️ **Instrucción:** {recomendacion}")
         
