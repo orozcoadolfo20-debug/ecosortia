@@ -1,0 +1,5 @@
+streamlit
+tensorflow
+tf-keras
+Pillow
+numpy
