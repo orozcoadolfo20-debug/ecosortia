@@ -98,22 +98,21 @@ def registrar_residuo(categoria):
     else:
         st.session_state.conteo_categorias[categoria] = 1
 
-# --- NUEVA FUNCIÓN: Recomendación de Basurero ---
+# --- FUNCIÓN ACTUALIZADA A TUS COLORES ---
 def obtener_recomendacion(categoria):
-    cat = categoria.lower() # Convertimos a minúsculas para buscar más fácil
+    cat = categoria.lower() 
     
-    if "plástico" in cat or "plastic" in cat or "pet" in cat:
-        return "🟡 **Contenedor Amarillo (Reciclaje):** Asegúrate de vaciar los líquidos y aplastar la botella antes de depositarla."
-    elif "papel" in cat or "cartón" in cat or "carton" in cat:
-        return "🔵 **Contenedor Azul (Papel y Cartón):** Deposítalo aquí solo si está seco y libre de grasas o restos de comida."
-    elif "vidrio" in cat or "glass" in cat:
-        return "🟢 **Contenedor Verde (Vidrio):** Deposita botellas o frascos sin sus tapas plásticas o metálicas."
-    elif "metal" in cat or "aluminio" in cat:
-        return "🟡 **Contenedor Amarillo (Metales):** Ideal para latas de aluminio limpias y aplastadas."
-    elif "orgánico" in cat or "organico" in cat or "comida" in cat or "fruta" in cat:
-        return "🟤 **Contenedor Marrón/Verde (Orgánico):** Material biodegradable ideal para hacer abono o compostaje."
+    # Verde: Orgánico
+    if "orgánico" in cat or "organico" in cat or "comida" in cat or "fruta" in cat or "cáscara" in cat:
+        return "🟢 **Contenedor Verde (Orgánico):** Deposita aquí restos de comida, cáscaras y material biodegradable."
+    
+    # Azul: Reciclable (PET, cartón, papel, vidrio, latas)
+    elif "plástico" in cat or "plastic" in cat or "pet" in cat or "papel" in cat or "cartón" in cat or "carton" in cat or "vidrio" in cat or "metal" in cat or "lata" in cat:
+        return "🔵 **Contenedor Azul (Reciclable):** Ideal para botellas plásticas (PET), cartón o latas. Asegúrate de que estén limpios o vacíos."
+    
+    # Amarillo: Inorgánico / No reciclable (Envolturas, basura general)
     else:
-        return "⚫ **Contenedor Negro/Gris (Desecho General):** Usa este contenedor si el material está muy sucio, mezclado o no es reciclable."
+        return "🟡 **Contenedor Amarillo (Inorgánico / No Reciclable):** Usa este contenedor para envolturas de golosinas, bolsas sucias y material que no se puede reciclar."
 
 # 9. Interfaz de Usuario con Pestañas
 tab1, tab2 = st.tabs(["📷 Cámara en Vivo", "📂 Subir Imagen"])
@@ -133,7 +132,7 @@ with tab1:
         st.success("¡Análisis completado!")
         st.markdown(f"### 🎯 Categoría Detectada: **{label_text}** (`{confidence * 100:.2f}%` certeza)")
         
-        # --- MOSTRAMOS LA RECOMENDACIÓN AQUÍ ---
+        # Mostrar recomendación con colores del cartel
         recomendacion = obtener_recomendacion(label_text)
         st.info(f"♻️ **Instrucción:** {recomendacion}")
         
@@ -157,7 +156,7 @@ with tab2:
         st.success("¡Análisis completado!")
         st.markdown(f"### 🎯 Categoría Detectada: **{label_text}** (`{confidence * 100:.2f}%` certeza)")
         
-        # --- MOSTRAMOS LA RECOMENDACIÓN AQUÍ ---
+        # Mostrar recomendación con colores del cartel
         recomendacion = obtener_recomendacion(label_text)
         st.info(f"♻️ **Instrucción:** {recomendacion}")
         
