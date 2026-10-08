@@ -98,23 +98,23 @@ def registrar_residuo(categoria):
     else:
         st.session_state.conteo_categorias[categoria] = 1
 
-# --- FUNCIÓN ACTUALIZADA: Corrección del bug de "inorgánico" ---
+# --- FUNCIÓN ACTUALIZADA: Agregada la palabra "reciclable" ---
 def obtener_recomendacion(categoria):
     cat = categoria.lower() 
     
-    # 1. Amarillo: Inorgánico (Evaluamos esto PRIMERO para que no se confunda con orgánico)
+    # 1. Amarillo: Inorgánico
     if "inorgánico" in cat or "inorganico" in cat or "envoltura" in cat:
         return "🟡 **Contenedor Amarillo (Inorgánico / No Reciclable):** Usa este contenedor para envolturas de golosinas, bolsas sucias y material que no se puede reciclar."
     
-    # 2. Verde: Orgánico (Ahora si dice orgánico, estamos seguros de que no es inorgánico)
+    # 2. Verde: Orgánico
     elif "orgánico" in cat or "organico" in cat or "comida" in cat or "fruta" in cat or "cáscara" in cat:
         return "🟢 **Contenedor Verde (Orgánico):** Deposita aquí restos de comida, cáscaras y material biodegradable."
     
-    # 3. Azul: Reciclable (PET, cartón, papel, vidrio, latas)
-    elif "plástico" in cat or "plastic" in cat or "pet" in cat or "papel" in cat or "cartón" in cat or "carton" in cat or "vidrio" in cat or "metal" in cat or "lata" in cat:
+    # 3. Azul: Reciclable (Añadimos "reciclable" explícitamente a la lista)
+    elif "reciclable" in cat or "reciclabe" in cat or "plástico" in cat or "plastic" in cat or "pet" in cat or "papel" in cat or "cartón" in cat or "carton" in cat or "vidrio" in cat or "metal" in cat or "lata" in cat:
         return "🔵 **Contenedor Azul (Reciclable):** Ideal para botellas plásticas (PET), cartón o latas. Asegúrate de que estén limpios o vacíos."
     
-    # 4. Por defecto, si no reconoce la palabra
+    # 4. Por defecto
     else:
         return "🟡 **Contenedor Amarillo (Inorgánico / No Reciclable):** Usa este contenedor para envolturas de golosinas, bolsas sucias y material que no se puede reciclar."
 
