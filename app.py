@@ -1,27 +1,23 @@
-import os
-# Fuerza a TensorFlow a usar el formato antiguo compatible con Teachable Machine
-os.environ['TF_USE_LEGACY_KERAS'] = '1'
-
 import streamlit as st
 from PIL import Image, ImageOps
 import numpy as np
 import tensorflow as tf
-
-# 1. Configuración general de la página
 import os
-os.environ['TF_USE_LEGACY_KERAS'] = '1'
 
-import streamlit as st
-from PIL import Image, ImageOps
-import numpy as np
-import tensorflow as tf
-
-# 1. Configuración general de la página (Ahora usa tu logo en la pestaña del navegador)
+# 1. Configuración general de la página 
 st.set_page_config(
     page_title="EcoSort IA - Clasificador Inteligente",
-    page_icon="logo.png", # <--- LOGO EN LA PESTAÑA DEL NAVEGADOR
+    page_icon="logo.png", 
     layout="centered"
 )
+
+# --- PARCHE PARA MODELOS DE TEACHABLE MACHINE EN TENSORFLOW NUEVO ---
+class CustomDepthwiseConv2D(tf.keras.layers.DepthwiseConv2D):
+    def __init__(self, **kwargs):
+        # Eliminamos el argumento 'groups' que causa el error de incompatibilidad
+        if 'groups' in kwargs:
+            del kwargs['groups']
+        super().__init__(**kwargs)
 
 # --- Inicializar la memoria (Contadores) ---
 if 'total_residuos' not in st.session_state:
@@ -33,7 +29,23 @@ if 'conteo_categorias' not in st.session_state:
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 MODEL_PATH = os.path.join(BASE_DIR, 'keras_model.h5')
 LABELS_PATH = os.path.join(BASE_DIR, 'labels.txt')
-LOGO_PATH = os.path.join(BASE_DIR, 'logo.jpg') # <--- RUTA DEL LOGO
+LOGO_PATH = os.path.join(BASE_DIR, 'logo.png') 
+
+# 3. Función para cargar el modelo con el parche aplicado
+@st.cache_resource
+def load_model():
+    # Usamos custom_objects para inyectar nuestra clase corregida al momento de cargar
+    model = tf.keras.models.load_model(
+        MODEL_PATH, 
+        compile=False,
+        custom_objects={'DepthwiseConv2D': CustomDepthwiseConv2D}
+    )
+    return model
+
+def load_labels():
+    with open(LABELS_PATH, 'r') as f:
+        labels = [line.strip() for line in f.readlines()]
+    return labels
 
 # --- NUEVO: Inicializar la memoria (Contadores) ---
 if 'total_residuos' not in st.session_state:
