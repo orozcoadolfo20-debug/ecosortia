@@ -26,7 +26,6 @@ LOGO_PATH = os.path.join(BASE_DIR, 'logo.jpg')
 # 4. Funciones para cargar el modelo
 @st.cache_resource
 def load_model():
-    # Carga 100% nativa sin parches
     model = tf.keras.models.load_model(MODEL_PATH, compile=False)
     return model
 
@@ -77,7 +76,7 @@ except Exception as e:
     st.warning(f"⚠️ Error al cargar: {e}. Revisa que keras_model.h5 y labels.txt estén en la carpeta.")
     model = None
 
-# 8. Función central para procesar la imagen
+# 8. Funciones centrales de la IA y Lógica
 def classify_image(img):
     size = (224, 224)
     image_resized = ImageOps.fit(img, size, Image.Resampling.LANCZOS)
@@ -99,6 +98,23 @@ def registrar_residuo(categoria):
     else:
         st.session_state.conteo_categorias[categoria] = 1
 
+# --- NUEVA FUNCIÓN: Recomendación de Basurero ---
+def obtener_recomendacion(categoria):
+    cat = categoria.lower() # Convertimos a minúsculas para buscar más fácil
+    
+    if "plástico" in cat or "plastic" in cat or "pet" in cat:
+        return "🟡 **Contenedor Amarillo (Reciclaje):** Asegúrate de vaciar los líquidos y aplastar la botella antes de depositarla."
+    elif "papel" in cat or "cartón" in cat or "carton" in cat:
+        return "🔵 **Contenedor Azul (Papel y Cartón):** Deposítalo aquí solo si está seco y libre de grasas o restos de comida."
+    elif "vidrio" in cat or "glass" in cat:
+        return "🟢 **Contenedor Verde (Vidrio):** Deposita botellas o frascos sin sus tapas plásticas o metálicas."
+    elif "metal" in cat or "aluminio" in cat:
+        return "🟡 **Contenedor Amarillo (Metales):** Ideal para latas de aluminio limpias y aplastadas."
+    elif "orgánico" in cat or "organico" in cat or "comida" in cat or "fruta" in cat:
+        return "🟤 **Contenedor Marrón/Verde (Orgánico):** Material biodegradable ideal para hacer abono o compostaje."
+    else:
+        return "⚫ **Contenedor Negro/Gris (Desecho General):** Usa este contenedor si el material está muy sucio, mezclado o no es reciclable."
+
 # 9. Interfaz de Usuario con Pestañas
 tab1, tab2 = st.tabs(["📷 Cámara en Vivo", "📂 Subir Imagen"])
 
@@ -116,6 +132,10 @@ with tab1:
         
         st.success("¡Análisis completado!")
         st.markdown(f"### 🎯 Categoría Detectada: **{label_text}** (`{confidence * 100:.2f}%` certeza)")
+        
+        # --- MOSTRAMOS LA RECOMENDACIÓN AQUÍ ---
+        recomendacion = obtener_recomendacion(label_text)
+        st.info(f"♻️ **Instrucción:** {recomendacion}")
         
         if st.button("➕ Registrar en Estadísticas", key="btn_cam"):
             registrar_residuo(label_text)
@@ -136,6 +156,10 @@ with tab2:
         
         st.success("¡Análisis completado!")
         st.markdown(f"### 🎯 Categoría Detectada: **{label_text}** (`{confidence * 100:.2f}%` certeza)")
+        
+        # --- MOSTRAMOS LA RECOMENDACIÓN AQUÍ ---
+        recomendacion = obtener_recomendacion(label_text)
+        st.info(f"♻️ **Instrucción:** {recomendacion}")
         
         if st.button("➕ Registrar en Estadísticas", key="btn_file"):
             registrar_residuo(label_text)
