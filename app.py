@@ -4,14 +4,14 @@ import numpy as np
 import tensorflow as tf
 import os
 
-# 1. Configuración general de la página 
+# 1. Configuración general de la página
 st.set_page_config(
     page_title="EcoSort IA - Clasificador Inteligente",
     page_icon="logo.png", 
     layout="centered"
 )
 
-# --- PARCHE PARA MODELOS DE TEACHABLE MACHINE EN TENSORFLOW NUEVO ---
+# 2. PARCHE PARA MODELOS DE TEACHABLE MACHINE EN TENSORFLOW NUEVO
 class CustomDepthwiseConv2D(tf.keras.layers.DepthwiseConv2D):
     def __init__(self, **kwargs):
         # Eliminamos el argumento 'groups' que causa el error de incompatibilidad
@@ -19,19 +19,19 @@ class CustomDepthwiseConv2D(tf.keras.layers.DepthwiseConv2D):
             del kwargs['groups']
         super().__init__(**kwargs)
 
-# --- Inicializar la memoria (Contadores) ---
+# 3. Inicializar la memoria (Contadores)
 if 'total_residuos' not in st.session_state:
     st.session_state.total_residuos = 0
 if 'conteo_categorias' not in st.session_state:
     st.session_state.conteo_categorias = {}
 
-# Rutas de los archivos
+# 4. Rutas de los archivos
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 MODEL_PATH = os.path.join(BASE_DIR, 'keras_model.h5')
 LABELS_PATH = os.path.join(BASE_DIR, 'labels.txt')
 LOGO_PATH = os.path.join(BASE_DIR, 'logo.png') 
 
-# 3. Función para cargar el modelo con el parche aplicado
+# 5. Funciones para cargar el modelo y las etiquetas
 @st.cache_resource
 def load_model():
     # Usamos custom_objects para inyectar nuestra clase corregida al momento de cargar
@@ -47,33 +47,11 @@ def load_labels():
         labels = [line.strip() for line in f.readlines()]
     return labels
 
-# --- NUEVO: Inicializar la memoria (Contadores) ---
-if 'total_residuos' not in st.session_state:
-    st.session_state.total_residuos = 0
-if 'conteo_categorias' not in st.session_state:
-    st.session_state.conteo_categorias = {}
-
-# 2. Rutas de los archivos
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-MODEL_PATH = os.path.join(BASE_DIR, 'keras_model.h5')
-LABELS_PATH = os.path.join(BASE_DIR, 'labels.txt')
-
-# 3. Funciones para cargar el modelo
-@st.cache_resource
-def load_model():
-    model = tf.keras.models.load_model(MODEL_PATH, compile=False)
-    return model
-
-def load_labels():
-    with open(LABELS_PATH, 'r') as f:
-        labels = [line.strip() for line in f.readlines()]
-    return labels
-
-# 4. Panel lateral (Sidebar) para mostrar las estadísticas
+# 6. Panel lateral (Sidebar) para mostrar las estadísticas
 try:
     st.sidebar.image(LOGO_PATH, width="stretch")
 except FileNotFoundError:
-    st.sidebar.warning("⚠️ Falta el archivo logo.jpg")
+    st.sidebar.warning("⚠️ Falta el archivo logo.png")
 
 st.sidebar.title("📊 Panel de Estadísticas")
 st.sidebar.metric(label="Total Clasificados", value=st.session_state.total_residuos)
@@ -92,8 +70,7 @@ if st.sidebar.button("🔄 Reiniciar Contadores"):
     st.session_state.conteo_categorias = {}
     st.rerun()
 
-# 5. Encabezado principal
-# --- LOGO EN LA PÁGINA PRINCIPAL (Opcional, si lo quieres arriba del título) ---
+# 7. Encabezado principal
 col1, col2 = st.columns([1, 3]) # Crea columnas para alinear el logo y el texto
 with col1:
     try:
@@ -104,12 +81,7 @@ with col2:
     st.title("EcoSort IA: Clasificación con Inteligencia Artificial")
     st.write("Identifica el tipo de residuo y descubre cómo reciclarlo correctamente.")
 
-
-
-
-
-
-# Carga del modelo
+# 8. Carga del modelo
 try:
     model = load_model()
     class_names = load_labels()
@@ -117,7 +89,7 @@ except Exception as e:
     st.warning(f"⚠️ Error al cargar: {e}. Revisa que keras_model.h5 y labels.txt estén en la carpeta.")
     model = None
 
-# 6. Función central para procesar la imagen
+# 9. Función central para procesar la imagen
 def classify_image(img):
     size = (224, 224)
     image_resized = ImageOps.fit(img, size, Image.Resampling.LANCZOS)
@@ -140,7 +112,7 @@ def registrar_residuo(categoria):
     else:
         st.session_state.conteo_categorias[categoria] = 1
 
-# 7. Interfaz de Usuario con Pestañas
+# 10. Interfaz de Usuario con Pestañas
 tab1, tab2 = st.tabs(["📷 Cámara en Vivo", "📂 Subir Imagen"])
 
 # --- Pestaña 1: Cámara en Vivo ---
