@@ -1,9 +1,11 @@
+import os
+# ESTAS DOS LÍNEAS DEBEN IR HASTA ARRIBA, ANTES DE IMPORTAR TENSORFLOW
+os.environ['TF_USE_LEGACY_KERAS'] = '1'
+
 import streamlit as st
 from PIL import Image, ImageOps
 import numpy as np
 import tensorflow as tf
-import h5py  # <--- Librería para editar el archivo H5 internamente
-import os
 
 # 1. Configuración general de la página
 st.set_page_config(
@@ -24,27 +26,10 @@ MODEL_PATH = os.path.join(BASE_DIR, 'keras_model.h5')
 LABELS_PATH = os.path.join(BASE_DIR, 'labels.txt')
 LOGO_PATH = os.path.join(BASE_DIR, 'logo.jpg') 
 
-# 4. Funciones para cargar el modelo (PARCHE DIRECTO AL ARCHIVO)
+# 4. Funciones para cargar el modelo
 @st.cache_resource
 def load_model():
-    # Parche definitivo: Modificamos el archivo H5 directamente para quitar la incompatibilidad
-    try:
-        with h5py.File(MODEL_PATH, mode="r+") as f:
-            model_config_string = f.attrs.get("model_config")
-            if model_config_string:
-                # Se decodifica en caso de venir como bytes
-                is_bytes = isinstance(model_config_string, bytes)
-                config_str = model_config_string.decode('utf-8') if is_bytes else model_config_string
-                
-                # Eliminamos la instrucción problemática que causa el error en TensorFlow nuevo
-                if '"groups": 1,' in config_str:
-                    config_str = config_str.replace('"groups": 1,', '')
-                    f.attrs.modify('model_config', config_str.encode('utf-8') if is_bytes else config_str)
-                    f.flush()
-    except Exception as e:
-        pass # Si ya estaba corregido, continuamos normalmente
-        
-    # Cargamos el modelo limpio sin necesidad de clases personalizadas
+    # Carga limpia usando el modo Legacy de Keras
     model = tf.keras.models.load_model(MODEL_PATH, compile=False)
     return model
 
