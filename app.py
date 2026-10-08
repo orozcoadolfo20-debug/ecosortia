@@ -2,6 +2,7 @@ import streamlit as st
 from PIL import Image, ImageOps
 import numpy as np
 import tensorflow as tf
+import keras # <--- 1. AGREGAR ESTA LÍNEA
 import os
 
 # 1. Configuración general de la página (Debe ir siempre de primero)
@@ -12,7 +13,8 @@ st.set_page_config(
 )
 
 # 2. PARCHE PARA MODELOS DE TEACHABLE MACHINE EN TENSORFLOW NUEVO
-class CustomDepthwiseConv2D(tf.keras.layers.DepthwiseConv2D):
+# <--- 2. USAR keras DIRECTAMENTE SIN EL PREFIJO tf.
+class CustomDepthwiseConv2D(keras.layers.DepthwiseConv2D):
     def __init__(self, **kwargs):
         if 'groups' in kwargs:
             del kwargs['groups']
