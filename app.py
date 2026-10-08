@@ -6,7 +6,7 @@ import os
 
 # 1. Configuración general
 st.set_page_config(
-    page_title="EcoSort IA - Clasificador Inteligente",
+    page_title="EcoScan IA - Clasificador Inteligente",
     page_icon="logo.jpg", 
     layout="centered"
 )
@@ -40,7 +40,7 @@ try:
 except FileNotFoundError:
     st.sidebar.warning("⚠️ Falta el archivo logo.jpg")
 
-st.sidebar.title("📊 Panel de Estadísticas")
+st.sidebar.title(" Panel de Estadísticas")
 st.sidebar.metric(label="Total Clasificados", value=st.session_state.total_residuos)
 
 st.sidebar.markdown("---")
@@ -52,7 +52,7 @@ else:
         st.sidebar.write(f"- **{categoria}**: {cantidad}")
 
 st.sidebar.markdown("---")
-if st.sidebar.button("🔄 Reiniciar Contadores"):
+if st.sidebar.button("Reiniciar Contadores"):
     st.session_state.total_residuos = 0
     st.session_state.conteo_categorias = {}
     st.rerun()
