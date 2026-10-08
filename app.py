@@ -2,45 +2,50 @@ import streamlit as st
 from PIL import Image, ImageOps
 import numpy as np
 import tensorflow as tf
-import keras # <--- 1. AGREGAR ESTA LÍNEA
+import h5py  # <--- Librería para editar el archivo H5 internamente
 import os
 
-# 1. Configuración general de la página (Debe ir siempre de primero)
+# 1. Configuración general de la página
 st.set_page_config(
     page_title="EcoSort IA - Clasificador Inteligente",
     page_icon="logo.jpg", 
     layout="centered"
 )
 
-# 2. PARCHE PARA MODELOS DE TEACHABLE MACHINE EN TENSORFLOW NUEVO
-# <--- 2. USAR keras DIRECTAMENTE SIN EL PREFIJO tf.
-class CustomDepthwiseConv2D(keras.layers.DepthwiseConv2D):
-    def __init__(self, **kwargs):
-        if 'groups' in kwargs:
-            del kwargs['groups']
-        super().__init__(**kwargs)
-
-# 3. Inicializar la memoria (Contadores)
+# 2. Inicializar la memoria (Contadores)
 if 'total_residuos' not in st.session_state:
     st.session_state.total_residuos = 0
 if 'conteo_categorias' not in st.session_state:
     st.session_state.conteo_categorias = {}
 
-# 4. Rutas de los archivos
+# 3. Rutas de los archivos
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 MODEL_PATH = os.path.join(BASE_DIR, 'keras_model.h5')
 LABELS_PATH = os.path.join(BASE_DIR, 'labels.txt')
-LOGO_PATH = os.path.join(BASE_DIR, 'logo.jpg') # <-- Modificado para JPG
+LOGO_PATH = os.path.join(BASE_DIR, 'logo.jpg') 
 
-# 5. Funciones para cargar el modelo y las etiquetas
+# 4. Funciones para cargar el modelo (PARCHE DIRECTO AL ARCHIVO)
 @st.cache_resource
 def load_model():
-    # Inyectamos el parche al cargar el modelo
-    model = tf.keras.models.load_model(
-        MODEL_PATH, 
-        compile=False,
-        custom_objects={'DepthwiseConv2D': CustomDepthwiseConv2D}
-    )
+    # Parche definitivo: Modificamos el archivo H5 directamente para quitar la incompatibilidad
+    try:
+        with h5py.File(MODEL_PATH, mode="r+") as f:
+            model_config_string = f.attrs.get("model_config")
+            if model_config_string:
+                # Se decodifica en caso de venir como bytes
+                is_bytes = isinstance(model_config_string, bytes)
+                config_str = model_config_string.decode('utf-8') if is_bytes else model_config_string
+                
+                # Eliminamos la instrucción problemática que causa el error en TensorFlow nuevo
+                if '"groups": 1,' in config_str:
+                    config_str = config_str.replace('"groups": 1,', '')
+                    f.attrs.modify('model_config', config_str.encode('utf-8') if is_bytes else config_str)
+                    f.flush()
+    except Exception as e:
+        pass # Si ya estaba corregido, continuamos normalmente
+        
+    # Cargamos el modelo limpio sin necesidad de clases personalizadas
+    model = tf.keras.models.load_model(MODEL_PATH, compile=False)
     return model
 
 def load_labels():
@@ -48,11 +53,11 @@ def load_labels():
         labels = [line.strip() for line in f.readlines()]
     return labels
 
-# 6. Panel lateral (Sidebar) para mostrar las estadísticas
+# 5. Panel lateral (Sidebar)
 try:
     st.sidebar.image(LOGO_PATH, width="stretch")
 except FileNotFoundError:
-    st.sidebar.warning("⚠️ Falta el archivo logo.jpg") # <-- Modificado para JPG
+    st.sidebar.warning("⚠️ Falta el archivo logo.jpg")
 
 st.sidebar.title("📊 Panel de Estadísticas")
 st.sidebar.metric(label="Total Clasificados", value=st.session_state.total_residuos)
@@ -71,7 +76,7 @@ if st.sidebar.button("🔄 Reiniciar Contadores"):
     st.session_state.conteo_categorias = {}
     st.rerun()
 
-# 7. Encabezado principal
+# 6. Encabezado principal
 col1, col2 = st.columns([1, 3])
 with col1:
     try:
@@ -82,7 +87,7 @@ with col2:
     st.title("EcoSort IA: Clasificación con Inteligencia Artificial")
     st.write("Identifica el tipo de residuo y descubre cómo reciclarlo correctamente.")
 
-# 8. Carga del modelo
+# 7. Carga del modelo
 try:
     model = load_model()
     class_names = load_labels()
@@ -90,7 +95,7 @@ except Exception as e:
     st.warning(f"⚠️ Error al cargar: {e}. Revisa que keras_model.h5 y labels.txt estén en la carpeta.")
     model = None
 
-# 9. Función central para procesar la imagen
+# 8. Función central para procesar la imagen
 def classify_image(img):
     size = (224, 224)
     image_resized = ImageOps.fit(img, size, Image.Resampling.LANCZOS)
@@ -105,7 +110,6 @@ def classify_image(img):
     
     return class_names[index], confidence_score
 
-# Función para registrar en la memoria
 def registrar_residuo(categoria):
     st.session_state.total_residuos += 1
     if categoria in st.session_state.conteo_categorias:
@@ -113,7 +117,7 @@ def registrar_residuo(categoria):
     else:
         st.session_state.conteo_categorias[categoria] = 1
 
-# 10. Interfaz de Usuario con Pestañas
+# 9. Interfaz de Usuario con Pestañas
 tab1, tab2 = st.tabs(["📷 Cámara en Vivo", "📂 Subir Imagen"])
 
 # --- Pestaña 1: Cámara en Vivo ---
@@ -131,7 +135,6 @@ with tab1:
         st.success("¡Análisis completado!")
         st.markdown(f"### 🎯 Categoría Detectada: **{label_text}** (`{confidence * 100:.2f}%` certeza)")
         
-        # Botón para confirmar y sumar al contador
         if st.button("➕ Registrar en Estadísticas", key="btn_cam"):
             registrar_residuo(label_text)
             st.rerun()
@@ -152,7 +155,6 @@ with tab2:
         st.success("¡Análisis completado!")
         st.markdown(f"### 🎯 Categoría Detectada: **{label_text}** (`{confidence * 100:.2f}%` certeza)")
         
-        # Botón para confirmar y sumar al contador
         if st.button("➕ Registrar en Estadísticas", key="btn_file"):
             registrar_residuo(label_text)
             st.rerun()
